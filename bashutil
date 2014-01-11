@@ -1,0 +1,138 @@
+#!/bin/bash
+
+##  'bashutil' command for bash
+##  Written by Jake Tesler
+##  v1
+#--------------------
+
+
+#useful bash utility
+
+function leave {
+	echo -e "\n"
+	exit
+}
+trap leave INT
+#trap 'echo -e "\n";exit' INT
+
+
+function printstuff {
+	echo -e "
+Please pick an option:
+
+[1] X-Rename a bunch of files
+[2] Make a banner (*text)
+[3] Today in History
+[4] Infinite Text
+[5] Kernel info
+[6] X-The Silly Stupid Song
+[7] X-Fun with Dialogs
+[99] Help
+"
+}
+
+function printhelp { echo -e "Bash utility to assist with various tasks. Please run the utility to help further.\n"
+}
+
+function printdetailedhelp {
+	echo -e "
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+----------------------------------------------------------------------
+Help:
+
+[2] Banner: Displays a large banner. Usage- (text*).
+[3] Today in History: Displays events in history that happened on (specified) day. [Type 'all' to see all events.]
+----------------------------------------------------------------------
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+}
+
+function selection {
+	echo -e "Please pick an option: \c"
+	read choice
+	case $choice in 
+	
+		#1)
+			#find . -name '*.1' -type f | while read NAME ; do mv "${NAME}" "${NAME%.1}" ; done
+			#;;
+		2)
+			read bnr
+			banner $bnr
+			;;
+		3)
+			echo -e "Please enter Month/day (e.g. 12/31) [leave blank for today]: \c"
+			read whatdate
+			if [ -z "$whatdate" ]; then
+				whatdate=$(date "+%m/%d")
+			elif [ "$whatdate" == "all" ]; then
+				echo -e "\nEvery Day in History:"
+				cat "/usr/share/calendar/calendar.history"
+				cat /usr/share/calendar/calendar.birthday
+				cat /usr/share/calendar/calendar.computer
+				cat /usr/share/calendar/calendar.lotr
+				cat /usr/share/calendar/calendar.music
+				echo -e "\nAll Holidays:"
+				cat /usr/share/calendar/calendar.holiday
+				exit
+			fi
+			echo -e "\nToday in History:"
+			cat "/usr/share/calendar/calendar.history" | grep $whatdate
+			cat /usr/share/calendar/calendar.birthday | grep $whatdate
+			cat /usr/share/calendar/calendar.computer | grep $whatdate
+			cat /usr/share/calendar/calendar.lotr | grep $whatdate
+			cat /usr/share/calendar/calendar.music | grep $whatdate
+			echo -e "\nHolidays today:"
+			curholiday="cat /usr/share/calendar/calendar.holiday | grep $whatdate"
+			if [ -z "$(cat /usr/share/calendar/calendar.holiday | grep $whatdate)" ]; then
+				echo -e "NONE"
+			else
+				cat /usr/share/calendar/calendar.holiday | grep $whatdate
+			fi
+			echo -e
+			;;
+		4)
+			echo -e "Please enter text to infinitely print to stdout (ctrl-c to exit): \c"
+			read txt
+			yes $txt
+			;;
+		5)
+			uname -a
+			;;
+		6)
+			osascript -e "say \"oh This is a silly song stupid song silly song this is the stupidest song ive ever ever heard
+			So why keep you listening listening listening while you are supposed to work to work to work to work 
+			its because i hate my job hate my job hate my job its because i hate my job more than anything else 
+			No its cause you have no life have no life have no life and you better go get one after forwarding this crap\"
+			using \"cellos\""
+			;;
+		7)
+			osascript -e 'tell application "insert app here" to display dialog "insert line here"'
+			;;
+		99)
+			printdetailedhelp;
+			printstuff;
+			selection;
+			;;
+
+
+		exit)
+			exit
+			;;
+		q)
+			exit
+			;;
+		quit)
+			exit
+			;;
+		*)
+			printstuff;
+			selection;
+			;;
+
+	esac
+}
+
+
+if [ "$1" == "--help" ]; then printhelp; exit; fi
+
+printstuff;
+selection;
