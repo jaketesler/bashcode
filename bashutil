@@ -15,6 +15,42 @@ function leave {
 trap leave INT
 #trap 'echo -e "\n";exit' INT
 
+function askforfan {
+	echo -e "Please enter minimum fan speed (in Hex): \c"
+	read newspeed
+}
+
+function fanpgrm {
+	fandone=1;
+	echo -e "Would you like to set minimum speed [1] or view the current speed [2]?: \c"
+	read fanoption
+	case $fanoption in
+		1)
+			#Set minimum fan speed (RPM)
+			askforfan;
+			if [ -z "$newspeed" ]; then
+				echo -e "\n""Please insert a value to change to"
+				askforfan;
+			else
+				echo -e "\n""smc -k F0Mn/F1Mn -w $newspeed"
+				smc -k F0Mn -w $newspeed
+				smc -k F1Mn -w $newspeed
+				echo -e "\n""Complete...Fan Speed set to $newspeed"
+				echo -e " "
+			fi
+			exit
+			;;
+		2)
+			smc -f
+			echo -e " "
+			exit
+			;;
+		*)
+			echo -e "Sorry, that isn't one of the choices."
+			;;
+	esac
+}
+
 
 function printstuff {
 	echo -e "
@@ -27,6 +63,8 @@ Please pick an option:
 [5] Kernel info
 [6] X-The Silly Stupid Song
 [7] X-Fun with Dialogs
+[8] dd SIGINFO
+[9] Fan Control
 [99] Help
 "
 }
@@ -106,6 +144,17 @@ function selection {
 			;;
 		7)
 			osascript -e 'tell application "insert app here" to display dialog "insert line here"'
+			;;
+		8)
+			watch -n 1 pkill -SIGINFO "^dd$"
+			;;
+		9)
+			fandone=0;
+			while [ $fandone < 1 ]; do
+			{
+				fanpgrm;
+			}
+			done
 			;;
 		99)
 			printdetailedhelp;
