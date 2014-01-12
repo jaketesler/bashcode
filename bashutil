@@ -3,19 +3,25 @@
 ##  'bashutil' command for bash
 ##  Written by Jake Tesler
 ##  v1.5
-#--------------------
+##--------------------
 
 VERSION=1.5
 echobold=`tput bold`
 echonormal=`tput sgr0`
+bashversion=`echo $BASH_VERSION | cut -d "." -f1`
 #useful bash utility
 
-function leave {
+function Leave {
 	echo -e
 	exit
 }
-trap leave INT
-#trap 'echo -e "\n";exit' INT
+trap Leave INT
+
+function ReturnToMenu {
+	echo -e "----------------------------------------------------------------------"
+	PrintMenuOptions;
+	MainSelection;
+}
 
 
 function fanpgrm {
@@ -42,8 +48,8 @@ function fanpgrm {
 			echo -e
 			;;
 		r)
-			printstuff;
-			selection;
+			PrintMenuOptions;
+			MainSelection;
 			;;
 		*)
 			echo -e "Sorry, that isn't one of the choices."
@@ -52,8 +58,8 @@ function fanpgrm {
 	esac
 }
 
-function todayinhistory {
-	echo -e "Please enter Month/day (e.g. 12/31) [leave blank for today]: \c"
+function TodayInHistory {
+	echo -e "Please enter Month/day (e.g. 12/31) [Leave blank for today]: \c"
 	read whatdate
 	if [ -z "$whatdate" ]; then
 		whatdate=$(date "+%m/%d")
@@ -82,12 +88,12 @@ function todayinhistory {
 	echo -e
 }
 
-function brightnessfn {
+function BrightnessFn {
 	brightfire=0
 	echo -e "Brightness Control options"
-	command -v moos >/dev/null 2>&1 || brightfire=1 >&2  ##tests if brightness exists
+	command -v brightness >/dev/null 2>&1 || brightfire=1 >&2  ##tests if brightness exists
 	if [ $brightfire == 1 ]; then
-		{ echo -e "I require ${echobold}brightness${echonormal} but it's not installed. \nPlease install brightness from GitHub and retry. \n${echobold}Aborting.${echonormal}"; sleep 3; printstuff; selection ; }
+		{ echo -e "I require ${echobold}brightness${echonormal} but it's not installed. \nPlease install brightness from GitHub and retry. \n${echobold}Aborting.${echonormal}"; sleep 3; ReturnToMenu; }
 	else {
 		while [ -z $brightchoice ]; do {
 			echo -e "Please choose: [a]djust brightness for this display (0.000-1.000), [d]isplay current settings [aD]: \c"
@@ -119,7 +125,7 @@ function brightnessfn {
 }
 
 
-function printstuff {
+function PrintMenuOptions {
 	echo -e "
 Please pick an option:
 
@@ -139,7 +145,7 @@ Please pick an option:
 "
 }
 
-function printhelp { 
+function PrintHelp { 
 	echo -e "
 Bashutil is (a beta of) the entire Bashcode
 series of programs/scripts, all rolled into a single utility.
@@ -154,7 +160,7 @@ I intend to use a variety of different forms of commands in this utility's
 source code to get as vast an expanse as possible (for future referencing). 
 I hope the source for 'bashutil' helps you as much as the utility itself!"; }
 
-function printdetailedhelp {
+function PrintDetailedHelp {
 	echo -e "
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ----------------------------------------------------------------------
@@ -176,7 +182,7 @@ Individual Command Help:
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 }
 
-function selection {
+function MainSelection {
 	echo -e "Please pick an option: \c"
 	read choice
 	case $choice in 
@@ -189,7 +195,7 @@ function selection {
 			banner $bnr
 			;;
 		
-		3)	todayinhistory; ;;
+		3)	TodayInHistory; ;;
 		
 		4)
 			echo -e "Please enter text to infinitely print to stdout (ctrl-c to exit): \c"
@@ -218,11 +224,13 @@ function selection {
 			while [ $fandone -ne 1 ]; do { fanpgrm; } done
 			;;
 
-		10) brightnessfn; ;;
+		10) BrightnessFn; ;;
 		
 		11)
 			while [ -z $readpath ]; do {
-				ls --color=always
+				if [ $bashversion -ge 4 ]; then { ls --color=always; }
+				else { ls; }
+				fi
 				read -p "Please choose a file to test: " -e readpath
 			} done
 			echo -e $readpath
@@ -230,24 +238,23 @@ function selection {
 			else { echo "File '$readpath' is not executable or not found"; }
 			fi ;;
 		99)
-			printdetailedhelp;
-			printstuff;
-			selection;
+			PrintDetailedHelp;
+			ReturnToMenu;
 			;;
 
-		[qQ] | [qQ][uU][iI][tT] | [eE][xX][iI][tT] ) leave; ;;
+		[qQ] | [qQ][uU][iI][tT] | [eE][xX][iI][tT] ) Leave; ;;
 
-		*)	printstuff; selection; ;;
+		*)	ReturnToMenu; ;;
 	esac
 	sleep 1.75
-	printstuff;
-	selection;
+	PrintMenuOptions;
+	MainSelection;
 }
 
 
-if [ "$1" == "--help" ]; then printhelp; printdetailedhelp; leave; fi
-if [ "$1" == "--version" ]; then echo -e "Version $version"; leave; fi
+if [ "$1" == "--help" ]; then PrintHelp; PrintDetailedHelp; Leave; fi
+if [ "$1" == "--version" ]; then echo -e "Version $version"; Leave; fi
 
 #actual flow here
-printstuff;
-selection;
+PrintMenuOptions;
+MainSelection;
