@@ -2,53 +2,120 @@
 
 ##  'bashutil' command for bash
 ##  Written by Jake Tesler
-##  v1
+##  v1.5
 #--------------------
 
-
+VERSION=1.5
+echobold=`tput bold`
+echonormal=`tput sgr0`
 #useful bash utility
 
 function leave {
-	echo -e "\n"
+	echo -e
 	exit
 }
 trap leave INT
 #trap 'echo -e "\n";exit' INT
 
-function askforfan {
-	echo -e "Please enter minimum fan speed (in Hex): \c"
-	read newspeed
-}
 
 function fanpgrm {
 	fandone=1;
-	echo -e "Would you like to set minimum speed [1] or view the current speed [2]?: \c"
+	echo -e "Would you like to set minimum speed [1], view the current speed [2], or [r]eturn to menu? [1/2/r]: \c"
 	read fanoption
 	case $fanoption in
-		1)
-			#Set minimum fan speed (RPM)
-			askforfan;
-			if [ -z "$newspeed" ]; then
-				echo -e "\n""Please insert a value to change to"
-				askforfan;
-			else
+		1)	#Set minimum fan speed (RPM)
+			echo -e "Please enter minimum fan speed (in Hex): \c"
+			read newspeed
+			while [ -z "$newspeed" ]; do
+				echo -e "\nPlease insert a value to change to..."
+				echo -e "Please enter minimum fan speed (in Hex): \c"
+				read newspeed
+			done
 				echo -e "\n""smc -k F0Mn/F1Mn -w $newspeed"
 				smc -k F0Mn -w $newspeed
 				smc -k F1Mn -w $newspeed
 				echo -e "\n""Complete...Fan Speed set to $newspeed"
-				echo -e " "
-			fi
-			exit
+				echo -e
 			;;
-		2)
+		2) 	#view current speed
 			smc -f
-			echo -e " "
-			exit
+			echo -e
+			;;
+		r)
+			printstuff;
+			selection;
 			;;
 		*)
 			echo -e "Sorry, that isn't one of the choices."
+			fandone=0
 			;;
 	esac
+}
+
+function todayinhistory {
+	echo -e "Please enter Month/day (e.g. 12/31) [leave blank for today]: \c"
+	read whatdate
+	if [ -z "$whatdate" ]; then
+		whatdate=$(date "+%m/%d")
+	elif [ "$whatdate" == "all" ]; then
+		echo -e "\nEvery Day in History:"
+		cat "/usr/share/calendar/calendar.history"
+		cat /usr/share/calendar/calendar.birthday
+		cat /usr/share/calendar/calendar.computer
+		cat /usr/share/calendar/calendar.lotr
+		cat /usr/share/calendar/calendar.music
+		echo -e "\nAll Holidays:"
+		cat /usr/share/calendar/calendar.holiday
+		exit
+	fi
+	echo -e "\nToday in History:"
+	cat "/usr/share/calendar/calendar.history" | grep $whatdate
+	cat /usr/share/calendar/calendar.birthday | grep $whatdate
+	cat /usr/share/calendar/calendar.computer | grep $whatdate
+	cat /usr/share/calendar/calendar.lotr | grep $whatdate
+	cat /usr/share/calendar/calendar.music | grep $whatdate
+	echo -e "\nHolidays today:"
+	curholiday="cat /usr/share/calendar/calendar.holiday | grep $whatdate"
+	if [ -z "$(cat /usr/share/calendar/calendar.holiday | grep $whatdate)" ]; then { echo -e "NONE"; }
+	else { cat /usr/share/calendar/calendar.holiday | grep $whatdate; }
+	fi
+	echo -e
+}
+
+function brightnessfn {
+	brightfire=0
+	echo -e "Brightness Control options"
+	command -v moos >/dev/null 2>&1 || brightfire=1 >&2  ##tests if brightness exists
+	if [ $brightfire == 1 ]; then
+		{ echo -e "I require ${echobold}brightness${echonormal} but it's not installed. \nPlease install brightness from GitHub and retry. \n${echobold}Aborting.${echonormal}"; sleep 3; printstuff; selection ; }
+	else {
+		while [ -z $brightchoice ]; do {
+			echo -e "Please choose: [a]djust brightness for this display (0.000-1.000), [d]isplay current settings [aD]: \c"
+			read brightchoice
+		}
+		done
+		case $brightcoice in
+			a)
+				echo -e
+
+				;;
+			*) ##d or anything else
+				while [ -z $brightdisplaychoice ]; do {
+					echo -e "Please choose: [n]ormal info or [a]dvanced info [aN]: \c"
+					read brightdisplaychoice
+				}
+				done
+				case $brightdisplaychoice in
+					#n) brightness -l ;;
+					a) brightness -l -v ;;
+					*) brightness -l ;; ##n or anything else
+				esac
+				;;
+			#*)
+				#;;
+		esac
+	}
+	fi
 }
 
 
@@ -56,21 +123,23 @@ function printstuff {
 	echo -e "
 Please pick an option:
 
-[1] X-Rename a bunch of files
+[1] X-Rename a bunch of files (not working)
 [2] Make a banner (*text)
 [3] Today in History
 [4] Infinite Text
 [5] Kernel info
 [6] X-The Silly Stupid Song
 [7] X-Fun with Dialogs
-[8] dd SIGINFO
+[8] dd Updater
 [9] Fan Control
-[99] Help
+[10] LCD Brightness Control (must have 'brightness' utility installed)
+[11] Test if a file is executable
+[99] Help with these commands
+[q] Quit
 "
 }
 
-function printhelp { echo -e "Bash utility to assist with various tasks. Please run the utility to help further.\n"
-}
+function printhelp { echo -e "Bash utility to assist with various tasks. Please run the utility to help further.\n"; }
 
 function printdetailedhelp {
 	echo -e "
@@ -80,6 +149,8 @@ Help:
 
 [2] Banner: Displays a large banner. Usage- (text*).
 [3] Today in History: Displays events in history that happened on (specified) day. [Type 'all' to see all events.]
+[10] -m changes the brightness of the main display; -d changes brightness of whatever display number/ID you provide. -l -v dumps display attributes.
+[q] Quit to command prompt (you can also type 'quit' or 'exit').
 ----------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 }
@@ -96,92 +167,66 @@ function selection {
 			read bnr
 			banner $bnr
 			;;
-		3)
-			echo -e "Please enter Month/day (e.g. 12/31) [leave blank for today]: \c"
-			read whatdate
-			if [ -z "$whatdate" ]; then
-				whatdate=$(date "+%m/%d")
-			elif [ "$whatdate" == "all" ]; then
-				echo -e "\nEvery Day in History:"
-				cat "/usr/share/calendar/calendar.history"
-				cat /usr/share/calendar/calendar.birthday
-				cat /usr/share/calendar/calendar.computer
-				cat /usr/share/calendar/calendar.lotr
-				cat /usr/share/calendar/calendar.music
-				echo -e "\nAll Holidays:"
-				cat /usr/share/calendar/calendar.holiday
-				exit
-			fi
-			echo -e "\nToday in History:"
-			cat "/usr/share/calendar/calendar.history" | grep $whatdate
-			cat /usr/share/calendar/calendar.birthday | grep $whatdate
-			cat /usr/share/calendar/calendar.computer | grep $whatdate
-			cat /usr/share/calendar/calendar.lotr | grep $whatdate
-			cat /usr/share/calendar/calendar.music | grep $whatdate
-			echo -e "\nHolidays today:"
-			curholiday="cat /usr/share/calendar/calendar.holiday | grep $whatdate"
-			if [ -z "$(cat /usr/share/calendar/calendar.holiday | grep $whatdate)" ]; then
-				echo -e "NONE"
-			else
-				cat /usr/share/calendar/calendar.holiday | grep $whatdate
-			fi
-			echo -e
-			;;
+		
+		3)	todayinhistory; ;;
+		
 		4)
 			echo -e "Please enter text to infinitely print to stdout (ctrl-c to exit): \c"
 			read txt
 			yes $txt
 			;;
-		5)
-			uname -a
-			;;
-		6)
-			osascript -e "say \"oh This is a silly song stupid song silly song this is the stupidest song ive ever ever heard
+
+		5)	uname -a ;;
+		
+		6)	osascript -e "say \"oh This is a silly song stupid song silly song this is the stupidest song ive ever ever heard
 			So why keep you listening listening listening while you are supposed to work to work to work to work 
 			its because i hate my job hate my job hate my job its because i hate my job more than anything else 
 			No its cause you have no life have no life have no life and you better go get one after forwarding this crap\"
-			using \"cellos\""
-			;;
-		7)
-			osascript -e 'tell application "insert app here" to display dialog "insert line here"'
-			;;
+			using \"cellos\"" ;;
+		
+		7)	osascript -e 'tell application "insert app here" to display dialog "insert line here"' ;;
+		
 		8)
+			osascript -e 'tell app "Terminal" to do script "echo -e \"Open a new window (or if one opened, use this window) and execute your (dd) command.\""'
 			watch -n 1 pkill -SIGINFO "^dd$"
 			;;
 		9)
+			echo -e
+			smc -f
 			fandone=0;
-			while [ $fandone < 1 ]; do
-			{
-				fanpgrm;
-			}
-			done
+			while [ $fandone -ne 1 ]; do { fanpgrm; } done
 			;;
+
+		10) brightnessfn; ;;
+		
+		11)
+			while [ -z $readpath ]; do {
+				ls --color=always
+				read -p "Please choose a file to test: " -e readpath
+			} done
+			echo -e $readpath
+			if [ -x "$readpath" ]; then { echo "File '$readpath' is executable"; }
+			else { echo "File '$readpath' is not executable or not found"; }
+			fi ;;
 		99)
 			printdetailedhelp;
 			printstuff;
 			selection;
 			;;
 
+		[qQ] | [qQ][uU][iI][tT] | [eE][xX][iI][tT] ) leave; ;;
 
-		exit)
-			exit
-			;;
-		q)
-			exit
-			;;
-		quit)
-			exit
-			;;
-		*)
-			printstuff;
-			selection;
-			;;
-
+		*)	printstuff; selection; ;;
 	esac
+	sleep 1.75
+	printstuff;
+	selection;
 }
 
 
-if [ "$1" == "--help" ]; then printhelp; exit; fi
+if [ "$1" == "--help" ]; then printhelp; printdetailedhelp; leave; fi
+if [ "$1" == "--version" ]; then echo -e "Version $version"; leave; fi
 
+#actual flow here
 printstuff;
 selection;
