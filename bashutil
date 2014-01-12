@@ -6,25 +6,30 @@
 ##--------------------
 
 VERSION=1.5
-echobold=`tput bold`
-echonormal=`tput sgr0`
+echoUnderline=`tput smul`
+echoNoUnderline=`tput rmul`
+echoBold=`tput bold`
+echoNoBold=`tput sgr0`
+
 bashversion=`echo $BASH_VERSION | cut -d "." -f1`
 #useful bash utility
 
 function Leave {
 	echo -e
+	echo "${echoNoBold}${echoNoUnderline}"
 	exit
 }
 trap Leave INT
 
 function ReturnToMenu {
-	echo -e "----------------------------------------------------------------------"
+	echo -e "_________________________________________________\n\c"
 	PrintMenuOptions;
 	MainSelection;
 }
 
 
-function fanpgrm {
+function FanPgrm {
+	echo -e "${echoUnderline}Fan Control${echoNoUnderline}\n"
 	fandone=1;
 	echo -e "Would you like to set minimum speed [1], view the current speed [2], or [r]eturn to menu? [1/2/r]: \c"
 	read fanoption
@@ -42,23 +47,24 @@ function fanpgrm {
 				smc -k F1Mn -w $newspeed
 				echo -e "\n""Complete...Fan Speed set to $newspeed"
 				echo -e
-			;;
+			unset newspeed ;;
 		2) 	#view current speed
 			smc -f
 			echo -e
 			;;
 		r)
-			PrintMenuOptions;
-			MainSelection;
+			ReturnToMenu;
 			;;
 		*)
 			echo -e "Sorry, that isn't one of the choices."
 			fandone=0
 			;;
 	esac
+	unset fanoption
 }
 
 function TodayInHistory {
+	echo -e "${echoUnderline}Today In History${echoNoUnderline}\n"
 	echo -e "Please enter Month/day (e.g. 12/31) [Leave blank for today]: \c"
 	read whatdate
 	if [ -z "$whatdate" ]; then
@@ -86,21 +92,22 @@ function TodayInHistory {
 	else { cat /usr/share/calendar/calendar.holiday | grep $whatdate; }
 	fi
 	echo -e
+	unset whatdate; unset curholiday;
 }
 
 function BrightnessFn {
 	brightfire=0
-	echo -e "Brightness Control options"
+	echo -e "${echoUnderline}Brightness Control Options${echoNoUnderline}\n"
 	command -v brightness >/dev/null 2>&1 || brightfire=1 >&2  ##tests if brightness exists
 	if [ $brightfire == 1 ]; then
-		{ echo -e "I require ${echobold}brightness${echonormal} but it's not installed. \nPlease install brightness from GitHub and retry. \n${echobold}Aborting.${echonormal}"; sleep 3; ReturnToMenu; }
+		{ echo -e "I require ${echoBold}brightness${echoNoBold} but it's not installed. \nPlease install brightness from GitHub and retry. \n${echoBold}Aborting.${echoNoBold}"; sleep 3; ReturnToMenu; }
 	else {
 		while [ -z $brightchoice ]; do {
 			echo -e "Please choose: [a]djust brightness for this display (0.000-1.000), [d]isplay current settings [aD]: \c"
 			read brightchoice
 		}
 		done
-		case $brightcoice in
+		case $brightchoice in
 			a)
 				echo -e
 
@@ -116,18 +123,22 @@ function BrightnessFn {
 					a) brightness -l -v ;;
 					*) brightness -l ;; ##n or anything else
 				esac
+				unset brightdisplaychoice
 				;;
 			#*)
 				#;;
 		esac
+		unset brightchoice
 	}
 	fi
+	unset brightfire
 }
 
 
 function PrintMenuOptions {
 	echo -e "
-Please pick an option:
+${echoBold}Bashutil Main Menu${echoNoBold}
+-------------------------------
 
 [1] X-Rename a bunch of files (not working)
 [2] Make a banner (*text)
@@ -141,7 +152,7 @@ Please pick an option:
 [10] LCD Brightness Control (must have 'brightness' utility installed)
 [11] Test if a file is executable
 [99] Help with these commands
-[q] Quit
+[q] Quit\
 "
 }
 
@@ -183,16 +194,33 @@ Individual Command Help:
 }
 
 function MainSelection {
-	echo -e "Please pick an option: \c"
+	echo -en "Please choose an option: ${echoUnderline}"
 	read choice
+	echo -e "${echoNoUnderline}- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n"
 	case $choice in 
 	
-		#1)
-			#find . -name '*.1' -type f | while read NAME ; do mv "${NAME}" "${NAME%.1}" ; done
-			#;;
+		1)
+			echo -e "${echoUnderline}File Renamer${echoNoUnderline}\n"
+			while [ -z $mvdirectory ]; do {
+				if [ $bashversion -ge 4 ]; then { ls --color=always; }
+				else { ls; }
+				fi
+				read -p "Please choose a directory: " -e mvdirectory
+			} done
+			echo -e $mvdirectory
+			cd $mvdirectory
+			#read -p "Please choose a file series: " -e filename
+			read -p "Please input old extension (omit the dot, e.g. jpg instead of .jpg): " -e extension
+			read -p "Please input the new extension: " -e newextension
+			#find . -name '*.$extension' -type f | while read NAME ; do mv "${NAME}" "${NAME%.$newextension}" ; done
+			find . -iname "*.${extension}" -exec "mv \"$0\" \"${0%.${extension}}.${newextension}\"" {}
+			unset mvdirectory; unset extension; unset newextension; ;;
 		2)
+			echo -e "${echoUnderline}Make a Banner${echoNoUnderline}\n"
+			echo -en "Please insert text: "
 			read bnr
 			banner $bnr
+			unset bnr
 			;;
 		
 		3)	TodayInHistory; ;;
@@ -205,15 +233,19 @@ function MainSelection {
 
 		5)	uname -a ;;
 		
-		6)	osascript -e "say \"oh This is a silly song stupid song silly song this is the stupidest song ive ever ever heard
+		6)	
+			echo -e "${echoUnderline}The Silly Song${echoNoUnderline}\n"
+			osascript -e "say \"oh This is a silly song stupid song silly song this is the stupidest song ive ever ever heard
 			So why keep you listening listening listening while you are supposed to work to work to work to work 
 			its because i hate my job hate my job hate my job its because i hate my job more than anything else 
 			No its cause you have no life have no life have no life and you better go get one after forwarding this crap\"
 			using \"cellos\"" ;;
 		
-		7)	osascript -e 'tell application "insert app here" to display dialog "insert line here"' ;;
+		7)	echo -e "${echoUnderline}Hidden Messages${echoNoUnderline}\n"
+			osascript -e 'tell application "insert app here" to display dialog "insert line here"' ;;
 		
 		8)
+			echo -e "${echoUnderline}dd Updater${echoNoUnderline}\n"
 			osascript -e 'tell app "Terminal" to do script "echo -e \"Open a new window (or if one opened, use this window) and execute your (dd) command.\""'
 			watch -n 1 pkill -SIGINFO "^dd$"
 			;;
@@ -221,12 +253,14 @@ function MainSelection {
 			echo -e
 			smc -f
 			fandone=0;
-			while [ $fandone -ne 1 ]; do { fanpgrm; } done
+			while [ $fandone -ne 1 ]; do { FanPgrm; } done
+			unset fandone
 			;;
 
 		10) BrightnessFn; ;;
 		
 		11)
+			echo -e "${echoUnderline}File Executable Test${echoNoUnderline}\n"
 			while [ -z $readpath ]; do {
 				if [ $bashversion -ge 4 ]; then { ls --color=always; }
 				else { ls; }
@@ -236,7 +270,8 @@ function MainSelection {
 			echo -e $readpath
 			if [ -x "$readpath" ]; then { echo "File '$readpath' is executable"; }
 			else { echo "File '$readpath' is not executable or not found"; }
-			fi ;;
+			fi 
+			unset readpath ;;
 		99)
 			PrintDetailedHelp;
 			ReturnToMenu;
@@ -247,8 +282,7 @@ function MainSelection {
 		*)	ReturnToMenu; ;;
 	esac
 	sleep 1.75
-	PrintMenuOptions;
-	MainSelection;
+	ReturnToMenu;
 }
 
 
