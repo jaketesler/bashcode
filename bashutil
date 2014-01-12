@@ -139,18 +139,39 @@ Please pick an option:
 "
 }
 
-function printhelp { echo -e "Bash utility to assist with various tasks. Please run the utility to help further.\n"; }
+function printhelp { 
+	echo -e "
+Bashutil is (a beta of) the entire Bashcode
+series of programs/scripts, all rolled into a single utility.
+Additionally, it serves as a \"repository\", of sorts, 
+for a variety of useful bash code snippets.
+I often find myself needing small snippets of code. For example, 
+if I'm looking for to use a command a certain way 
+(with plenty of parameters), 
+or if I forget the correct syntax of a certain loop, etc., 
+this will serve as a base for me to find all of those snippets. 
+I intend to use a variety of different forms of commands in this utility's 
+source code to get as vast an expanse as possible (for future referencing). 
+I hope the source for 'bashutil' helps you as much as the utility itself!"; }
 
 function printdetailedhelp {
 	echo -e "
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ----------------------------------------------------------------------
-Help:
+Individual Command Help:
 
-[2] Banner: Displays a large banner. Usage- (text*).
-[3] Today in History: Displays events in history that happened on (specified) day. [Type 'all' to see all events.]
-[10] -m changes the brightness of the main display; -d changes brightness of whatever display number/ID you provide. -l -v dumps display attributes.
-[q] Quit to command prompt (you can also type 'quit' or 'exit').
+[2]	Banner: Displays a large banner. Usage- (text*).
+[3]	Today in History: Displays events in history that happened on (specified) day. [Type 'all' to see all events.]
+[4]
+[5]
+[6]
+[7]
+[8]
+[9]
+[10]	-m changes the brightness of the main display; -d changes brightness of whatever display number/ID you provide. -l -v dumps display attributes.
+[11]
+[99]	This help.
+[q]	Quit to command prompt (you can also type 'quit' or 'exit').
 ----------------------------------------------------------------------
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 }
