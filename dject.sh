@@ -14,8 +14,11 @@ function ejectDiskWithName() {
 		echo -e "\ndiskutil list"
 		echo -e "$disklist"	
 	else
-		echo -e "\n""diskutil eject $disknum"
-		diskutil eject $disknum
+		for i in $disknum 
+		do
+			echo -e "\n""diskutil eject $i"
+			diskutil eject $i
+		done
 		echo -e "\n""diskutil list"
 		diskutil list
 	fi
