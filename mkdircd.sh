@@ -7,6 +7,10 @@
 
 function mkdircde () { mkdir -p "$@" && eval cd "\"\$$#\""; }
 
-##mkdircde
+#mkdir -p $1
+#sleep 1
+#cd $1
+
+#mkdircde
 mkdir -p "$@"
 eval cd ./$@

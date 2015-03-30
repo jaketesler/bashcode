@@ -27,27 +27,58 @@ function ReturnToMenu {
 	MainSelection;
 }
 
+function fanset()
+{
+	speed_ok=false;
+	max_sp=$(smc -k F0Mx -r | cut -d ' ' -f 7)
+	min_sp=$(smc -k F0Mn -r | cut -d ' ' -f 7)
+
+	echo -e "Please enter target fan speed: \c"
+	read newspeed
+
+	while [ [$speed_ok] ]; do
+		if [[ $speed -gt $max_sp ]]; then
+			echo -e "\nERROR: selected speed too high (max speed = $max_sp""rpm)"
+			echo -e "Please enter target fan speed ['r' to return to menu]: \c"
+			read speed
+
+			if [[ $speed == 'r' ]]; then return;
+			elif [[ -z $speed ]]; then speed=$(expr $max_sp + 1);
+			elif [[ $speed =~ ^-?[0-9]+$ ]]; then true; #check for valid value (if number)
+			else speed=$(expr $max_sp + 1);
+			fi
+
+		elif [[ $speed -lt $min_sp ]]; then
+			echo -e "\nERROR: selected speed too low (min speed = $min_sp""rpm)"
+			echo -e "Please enter target fan speed ['r' to return to menu]: \c"
+			read speed
+			
+			if [[ $speed == 'r' ]]; then return;
+			elif [[ -z $speed ]]; then speed=$(expr $min_sp - 1);
+			elif [[ $speed =~ ^-?[0-9]+$ ]]; then true; #check for valid value (if number)
+			else speed=$(expr $min_sp - 1);
+			fi
+
+		else speed_ok=true; fi
+	done
+	unset speed_ok max_sp min_sp
+	newspeed=$(python -c "print hex($newspeed << 2)")
+	smc -k F0Tg -w $newspeed
+	smc -k F1Tg -w $newspeed
+	echo -e "\n""Fan Speed set to $newspeed"
+	echo -e
+	unset newspeed
+}
+
 
 function FanPgrm {
 	echo -e "${echoUnderline}Fan Control${echoNoUnderline}\n"
 	fandone=1;
-	echo -e "Would you like to set minimum speed [1], view the current speed [2], or [r]eturn to menu? [1/2/r]: \c"
+	echo -e "Would you like to set manual speed [1], view the current speed [2], or [r]eturn to menu? [1/2/r]: \c"
 	read fanoption
 	case $fanoption in
-		1)	#Set minimum fan speed (RPM)
-			echo -e "Please enter minimum fan speed (in Hex): \c"
-			read newspeed
-			while [ -z "$newspeed" ]; do
-				echo -e "\nPlease insert a value to change to..."
-				echo -e "Please enter minimum fan speed (in Hex): \c"
-				read newspeed
-			done
-				echo -e "\n""smc -k F0Mn/F1Mn -w $newspeed"
-				smc -k F0Mn -w $newspeed
-				smc -k F1Mn -w $newspeed
-				echo -e "\n""Complete...Fan Speed set to $newspeed"
-				echo -e
-			unset newspeed ;;
+		1)	#Set target fan speed (RPM)
+			fanset
 		2) 	#view current speed
 			smc -f
 			echo -e
@@ -200,7 +231,7 @@ function MainSelection {
 	case $choice in 
 	
 		1)
-			echo -e "${echoUnderline}File Renamer${echoNoUnderline}\n"
+			echo -e "${echoUnderline}File Extension Renamer${echoNoUnderline}\n"
 			while [ -z $mvdirectory ]; do {
 				if [ $bashversion -ge 4 ]; then { ls --color=always; }
 				else { ls; }
